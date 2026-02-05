@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pencatat Waktu Lembur</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    * {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .record-item {
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      border-color: #2563eb;
+    }
+    .offline-badge {
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full" style="background-color: #f8f9fa;">
+  <div id="app-container" class="h-full w-full overflow-auto">
+   <div class="min-h-full w-full p-2 md:p-3"><!-- Offline Status Badge -->
+    <div id="offline-status" class="hidden max-w-md mx-auto mb-2 px-3 py-2 rounded-lg bg-yellow-50 border border-yellow-200 flex items-center gap-2">
+     <div class="w-2 h-2 rounded-full offline-badge" style="background-color: #ea8c55;"></div><span class="text-xs" style="color: #92400e;">Mode Offline - Data disimpan lokal</span>
+    </div><!-- Header -->
+    <div class="max-w-md mx-auto mb-3">
+     <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, #dc2626 0%, #2563eb 100%);">
+       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewbox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+       </svg>
+      </div>
+      <div>
+       <h1 id="app-title" class="text-base font-bold" style="color: #1f2937;">Lembur Ku</h1>
+       <p style="color: #6b7280;" class="text-xs">Catat jam lembur</p>
+      </div>
+     </div>
+    </div><!-- Summary Card -->
+    <div class="max-w-md mx-auto mb-3">
+     <div class="rounded-lg p-3 shadow-sm" style="background: linear-gradient(135deg, #dc2626 0%, #2563eb 100%);">
+      <div class="flex items-center justify-between">
+       <div>
+        <p class="text-white/90 text-xs font-medium">Total Bulan Ini</p>
+        <p id="total-hours" class="text-lg font-bold text-white">0j 0m</p>
+       </div>
+       <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewbox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+       </div>
+      </div>
+      <p id="record-count" class="text-white/90 text-xs mt-2">0 catatan</p>
+     </div>
+    </div><!-- Form Section -->
+    <div class="max-w-md mx-auto mb-3">
+     <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+      <form id="overtime-form" class="space-y-2">
+       <div class="grid grid-cols-2 gap-2">
+        <div><label class="block text-gray-700 text-xs font-medium mb-1" for="tanggal">Tanggal</label> <input type="date" id="tanggal" required class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:border-transparent transition" style="color: #1f2937;">
+        </div>
+        <div><label class="block text-gray-700 text-xs font-medium mb-1" for="jam_mulai">Mulai</label> <input type="time" id="jam_mulai" required class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:border-transparent transition" style="color: #1f2937;">
+        </div>
+       </div>
+       <div class="grid grid-cols-2 gap-2">
+        <div><label class="block text-gray-700 text-xs font-medium mb-1" for="jam_selesai">Selesai</label> <input type="time" id="jam_selesai" required class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:border-transparent transition" style="color: #1f2937;">
+        </div>
+        <div><label class="block text-gray-700 text-xs font-medium mb-1" for="keterangan">Catatan</label> <input type="text" id="keterangan" placeholder="Opsional" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs focus:outline-none focus:ring-2 focus:border-transparent transition" style="color: #1f2937;">
+        </div>
+       </div><button type="submit" id="submit-btn" class="btn-primary w-full font-semibold py-2 px-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-1 text-white text-sm" style="background: linear-gradient(135deg, #dc2626 0%, #2563eb 100%);">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewbox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg><span id="add-btn-text">Tambah</span> </button>
+      </form>
+      <p id="limit-warning" class="hidden mt-2 text-red-600 text-xs text-center">⚠️ Batas maksimum tercapai</p>
+     </div>
+    </div><!-- Records List -->
+    <div class="max-w-md mx-auto">
+     <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+      <div class="flex items-center justify-between mb-2">
+       <h2 class="text-sm font-semibold flex items-center gap-1" style="color: #1f2937;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0" fill="none" viewbox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color: #2563eb;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg> Riwayat</h2>
+       <div id="delete-all-container" class="hidden"><button id="delete-all-btn" class="text-xs px-2 py-1 rounded transition" style="color: #dc2626; background-color: #fee2e2; border: 1px solid #fecaca;">Hapus Semua</button>
+        <div id="delete-all-confirm" class="hidden mt-2 p-2 rounded" style="background-color: #fef2f2; border: 1px solid #fecaca;">
+         <p class="text-xs mb-2" style="color: #991b1b;">Hapus semua catatan?</p>
+         <div class="flex gap-1"><button id="delete-all-yes" class="flex-1 text-white text-xs font-medium py-1 px-2 rounded transition" style="background-color: #dc2626;">Ya</button> <button id="delete-all-no" class="flex-1 text-white text-xs font-medium py-1 px-2 rounded transition" style="background-color: #6b7280;">Batal</button>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div id="records-list" class="space-y-2 max-h-80 overflow-y-auto">
+       <div id="empty-state" class="text-center py-6">
+        <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="none" viewbox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+         </svg>
+        </div>
+        <p style="color: #6b7280;" class="text-xs">Belum ada catatan</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Password Modal -->
+  <div id="password-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+   <div class="bg-white rounded-lg p-4 w-80 shadow-xl">
+    <h3 class="text-sm font-bold mb-3" style="color: #1f2937;">Masukkan Password</h3>
+    <p class="text-xs mb-3" style="color: #6b7280;">Untuk melanjutkan penghapusan, masukkan kode keamanan</p><input type="password" id="password-input" placeholder="Kode 4 digit" maxlength="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:border-transparent transition mb-3" style="color: #1f2937; letter-spacing: 0.2em;">
+    <p id="password-error" class="hidden text-xs text-red-600 mb-2">Kode salah, coba lagi</p>
+    <div class="flex gap-2"><button id="password-cancel" class="flex-1 text-white text-xs font-medium py-2 px-3 rounded transition" style="background-color: #6b7280;">Batal</button> <button id="password-submit" class="flex-1 text-white text-xs font-medium py-2 px-3 rounded transition" style="background-color: #2563eb;">OK</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      app_title: 'Pencatat Waktu Lembur',
+      add_button_text: 'Tambah Lembur',
+      background_color: '#f8f9fa',
+      surface_color: '#ffffff',
+      text_color: '#1f2937',
+      primary_color: '#dc2626',
+      secondary_color: '#2563eb'
+    };
+
+    let config = { ...defaultConfig };
+    let overtimeRecords = [];
+    const PASSWORD = '8686';
+    let pendingDeleteRecord = null;
+    let isOnline = navigator.onLine;
+    const STORAGE_KEY = 'overtime_records_backup';
+
+    // Check online status
+    window.addEventListener('online', () => {
+      isOnline = true;
+      updateOfflineStatus();
+    });
+
+    window.addEventListener('offline', () => {
+      isOnline = false;
+      updateOfflineStatus();
+    });
+
+    function updateOfflineStatus() {
+      const offlineStatus = document.getElementById('offline-status');
+      if (!isOnline) {
+        offlineStatus.classList.remove('hidden');
+      } else {
+        offlineStatus.classList.add('hidden');
+      }
+    }
+
+    // LocalStorage management
+    function saveToLocalStorage(records) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
+      }
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+      } catch (e) {
+        console.error('Failed to load from localStorage:', e);
+        return [];
+      }
+    }
+
+    // Format date to Indonesian locale
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('id-ID', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    }
+
+    // Format duration
+    function formatDuration(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      if (hours === 0) return `${mins}m`;
+      if (mins === 0) return `${hours}j`;
+      return `${hours}j ${mins}m`;
+    }
+
+    // Calculate duration in minutes
+    function calculateDuration(start, end) {
+      const [startH, startM] = start.split(':').map(Number);
+      const [endH, endM] = end.split(':').map(Number);
+      let startMinutes = startH * 60 + startM;
+      let endMinutes = endH * 60 + endM;
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+      return endMinutes - startMinutes;
+    }
+
+    // Update summary
+    function updateSummary() {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      const thisMonthRecords = overtimeRecords.filter(r => {
+        const recordDate = new Date(r.tanggal);
+        return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+      });
+      
+      const totalMinutes = thisMonthRecords.reduce((sum, r) => sum + (r.durasi_menit || 0), 0);
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      
+      document.getElementById('total-hours').textContent = `${hours} jam ${mins} menit`;
+      document.getElementById('record-count').textContent = `${overtimeRecords.length} catatan lembur`;
+      
+      const limitWarning = document.getElementById('limit-warning');
+      const submitBtn = document.getElementById('submit-btn');
+      if (overtimeRecords.length >= 999) {
+        limitWarning.classList.remove('hidden');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        limitWarning.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    // Render records list
+    function renderRecords() {
+      const container = document.getElementById('records-list');
+      const emptyState = document.getElementById('empty-state');
+      const deleteAllContainer = document.getElementById('delete-all-container');
+      
+      if (overtimeRecords.length === 0) {
+        emptyState.classList.remove('hidden');
+        deleteAllContainer.classList.add('hidden');
+        container.querySelectorAll('.record-item').forEach(el => el.remove());
+        return;
+      }
+      
+      deleteAllContainer.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      
+      const sorted = [...overtimeRecords].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+      
+      const existingItems = new Map();
+      container.querySelectorAll('.record-item').forEach(el => {
+        existingItems.set(el.dataset.id, el);
+      });
+      
+      const processedIds = new Set();
+      
+      sorted.forEach((record, index) => {
+        processedIds.add(record.__backendId);
+        
+        if (existingItems.has(record.__backendId)) {
+          const el = existingItems.get(record.__backendId);
+          updateRecordElement(el, record);
+          if (container.children[index + 1] !== el) {
+            container.insertBefore(el, container.children[index + 1]);
+          }
+        } else {
+          const el = createRecordElement(record);
+          if (container.children[index + 1]) {
+            container.insertBefore(el, container.children[index + 1]);
+          } else {
+            container.appendChild(el);
+          }
+        }
+      });
+      
+      existingItems.forEach((el, id) => {
+        if (!processedIds.has(id)) {
+          el.remove();
+        }
+      });
+    }
+
+    // Create record element
+    function createRecordElement(record) {
+      const div = document.createElement('div');
+      div.className = 'record-item rounded-xl p-4 border border-gray-200';
+      div.dataset.id = record.__backendId;
+      div.style.backgroundColor = '#f8f9fa';
+      updateRecordElement(div, record);
+      return div;
+    }
+
+    // Update record element
+    function updateRecordElement(el, record) {
+      el.innerHTML = `
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-xs" style="color: #1f2937;">${formatDate(record.tanggal)}</p>
+            <p style="color: #6b7280;" class="text-xs mt-0.5">
+              ${record.jam_mulai} - ${record.jam_selesai}
+              ${record.keterangan ? ` • ${record.keterangan}` : ''}
+            </p>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <span class="text-xs font-medium px-2 py-1 rounded whitespace-nowrap" style="background-color: #fecaca; color: #991b1b;">
+              ${formatDuration(record.durasi_menit)}
+            </span>
+            <button class="delete-btn p-1 rounded transition" style="color: #6b7280;" title="Hapus">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      `;
+      
+      const deleteBtn = el.querySelector('.delete-btn');
+      
+      deleteBtn.addEventListener('click', () => {
+        pendingDeleteRecord = record;
+        showPasswordModal();
+      });
+    }
+
+    // Apply config to UI
+    async function onConfigChange(cfg) {
+      config = { ...defaultConfig, ...cfg };
+      
+      document.getElementById('app-title').textContent = config.app_title || defaultConfig.app_title;
+      document.getElementById('add-btn-text').textContent = config.add_button_text || defaultConfig.add_button_text;
+    }
+
+    // Show password modal
+    function showPasswordModal() {
+      document.getElementById('password-modal').classList.remove('hidden');
+      document.getElementById('password-input').value = '';
+      document.getElementById('password-error').classList.add('hidden');
+      document.getElementById('password-input').focus();
+    }
+
+    // Hide password modal
+    function hidePasswordModal() {
+      document.getElementById('password-modal').classList.add('hidden');
+      document.getElementById('password-input').value = '';
+      document.getElementById('password-error').classList.add('hidden');
+      pendingDeleteRecord = null;
+    }
+
+    // Verify password and delete record
+    async function verifyAndDelete() {
+      const passwordInput = document.getElementById('password-input').value;
+      const passwordError = document.getElementById('password-error');
+      const passwordSubmit = document.getElementById('password-submit');
+
+      if (passwordInput !== PASSWORD) {
+        passwordError.classList.remove('hidden');
+        document.getElementById('password-input').value = '';
+        document.getElementById('password-input').focus();
+        return;
+      }
+
+      if (pendingDeleteRecord === 'delete-all') {
+        passwordSubmit.disabled = true;
+        passwordSubmit.textContent = 'Menghapus...';
+        
+        for (const record of [...overtimeRecords]) {
+          const result = await window.dataSdk.delete(record);
+          if (!result.isOk) {
+            console.error('Failed to delete record:', result.error);
+          }
+        }
+        
+        passwordSubmit.disabled = false;
+        passwordSubmit.textContent = 'OK';
+        hidePasswordModal();
+      } else if (pendingDeleteRecord) {
+        passwordSubmit.disabled = true;
+        passwordSubmit.textContent = 'Menghapus...';
+        
+        const result = await window.dataSdk.delete(pendingDeleteRecord);
+        if (!result.isOk) {
+          passwordSubmit.disabled = false;
+          passwordSubmit.textContent = 'OK';
+        }
+        
+        hidePasswordModal();
+      }
+    }
+
+    // Data handler
+    const dataHandler = {
+      onDataChanged(data) {
+        overtimeRecords = data;
+        saveToLocalStorage(data);
+        updateSummary();
+        renderRecords();
+      }
+    };
+
+    // Form submission
+    document.getElementById('overtime-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (overtimeRecords.length >= 999) {
+        return;
+      }
+      
+      const submitBtn = document.getElementById('submit-btn');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Menyimpan...</span>
+      `;
+      
+      const tanggal = document.getElementById('tanggal').value;
+      const jam_mulai = document.getElementById('jam_mulai').value;
+      const jam_selesai = document.getElementById('jam_selesai').value;
+      const keterangan = document.getElementById('keterangan').value;
+      const durasi_menit = calculateDuration(jam_mulai, jam_selesai);
+      
+      const newRecord = {
+        tanggal,
+        jam_mulai,
+        jam_selesai,
+        durasi_menit,
+        keterangan,
+        created_at: new Date().toISOString()
+      };
+      
+      const result = await window.dataSdk.create(newRecord);
+      
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+      
+      if (result.isOk) {
+        document.getElementById('overtime-form').reset();
+        document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
+      } else {
+        if (!isOnline) {
+          overtimeRecords.push({
+            __backendId: Date.now().toString(),
+            ...newRecord
+          });
+          saveToLocalStorage(overtimeRecords);
+          updateSummary();
+          renderRecords();
+          document.getElementById('overtime-form').reset();
+          document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
+        }
+      }
+    });
+
+    // Initialize
+    async function init() {
+      document.getElementById('tanggal').value = new Date().toISOString().split('T')[0];
+      updateOfflineStatus();
+      
+      // Password modal handlers
+      document.getElementById('password-submit').addEventListener('click', verifyAndDelete);
+      document.getElementById('password-cancel').addEventListener('click', hidePasswordModal);
+      document.getElementById('password-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          verifyAndDelete();
+        }
+      });
+      
+      // Delete all button handler
+      const deleteAllBtn = document.getElementById('delete-all-btn');
+      const deleteAllConfirm = document.getElementById('delete-all-confirm');
+      const deleteAllYes = document.getElementById('delete-all-yes');
+      const deleteAllNo = document.getElementById('delete-all-no');
+      
+      deleteAllBtn.addEventListener('click', () => {
+        deleteAllConfirm.classList.remove('hidden');
+      });
+      
+      deleteAllNo.addEventListener('click', () => {
+        deleteAllConfirm.classList.add('hidden');
+      });
+      
+      deleteAllYes.addEventListener('click', async () => {
+        if (overtimeRecords.length === 0) return;
+        
+        pendingDeleteRecord = 'delete-all';
+        showPasswordModal();
+        deleteAllConfirm.classList.add('hidden');
+      });
+      
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities: (cfg) => ({
+            recolorables: [
+              {
+                get: () => cfg.background_color || defaultConfig.background_color,
+                set: (v) => { cfg.background_color = v; window.elementSdk.setConfig({ background_color: v }); }
+              },
+              {
+                get: () => cfg.surface_color || defaultConfig.surface_color,
+                set: (v) => { cfg.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); }
+              },
+              {
+                get: () => cfg.text_color || defaultConfig.text_color,
+                set: (v) => { cfg.text_color = v; window.elementSdk.setConfig({ text_color: v }); }
+              },
+              {
+                get: () => cfg.primary_color || defaultConfig.primary_color,
+                set: (v) => { cfg.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); }
+              },
+              {
+                get: () => cfg.secondary_color || defaultConfig.secondary_color,
+                set: (v) => { cfg.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); }
+              }
+            ],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (cfg) => new Map([
+            ['app_title', cfg.app_title || defaultConfig.app_title],
+            ['add_button_text', cfg.add_button_text || defaultConfig.add_button_text]
+          ])
+        });
+      }
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          const localData = loadFromLocalStorage();
+          if (localData.length > 0) {
+            overtimeRecords = localData;
+            updateSummary();
+            renderRecords();
+          }
+        }
+      } else {
+        const localData = loadFromLocalStorage();
+        if (localData.length > 0) {
+          overtimeRecords = localData;
+          updateSummary();
+          renderRecords();
+        }
+      }
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c950229331ffd95',t:'MTc3MDMyMTc3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
